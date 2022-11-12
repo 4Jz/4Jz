@@ -1,5 +1,5 @@
 
-- 📫 [https://fosstodon.org/@4Jz](https://fosstodon.org/@4Jz)
+- 📫 [<a rel="me" href="https://fosstodon.org/@4Jz">Mastodon</a>]
 
 <!---
 4Jz/4Jz is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
