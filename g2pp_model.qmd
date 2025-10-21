@@ -1,0 +1,195 @@
+---
+title: "G2++ Interest Rate Model"
+format: html
+jupyter: python3
+---
+
+## Introduction
+
+The G2++ model is a two-factor short rate model with deterministic shift extensions. It is an arbitrage-free model commonly used for pricing interest rate derivatives.
+
+## Model Equations
+
+### State Variables
+
+The model has two state variables $x(t)$ and $y(t)$ that follow the stochastic differential equations:
+
+$$
+dx(t) = -a \cdot x(t) \, dt + \sigma \, dW_1(t)
+$$
+
+$$
+dy(t) = -b \cdot y(t) \, dt + \eta \, dW_2(t)
+$$
+
+where:
+
+- $a, b$ are mean reversion speeds
+- $\sigma, \eta$ are volatilities
+- $dW_1(t), dW_2(t)$ are Brownian motions with correlation $\rho$
+
+### Short Rate
+
+The short rate is given by:
+
+$$
+r(t) = x(t) + y(t) + \varphi(t)
+$$
+
+where $\varphi(t)$ is a deterministic shift function fitted to the initial term structure.
+
+### Zero-Coupon Bond Price
+
+The price of a zero-coupon bond is:
+
+$$
+P(t,T) = A(t,T) \exp\left(-B_x(T-t) x(t) - B_y(T-t) y(t)\right)
+$$
+
+where:
+
+$$
+B_x(\tau) = \frac{1-e^{-a\tau}}{a}
+$$
+
+$$
+B_y(\tau) = \frac{1-e^{-b\tau}}{b}
+$$
+
+## SymPy Implementation
+
+Let's implement and verify these formulas using SymPy:
+
+```{python}
+import sympy as sp
+from sympy import symbols, exp, sqrt, simplify, integrate, diff
+import numpy as np
+
+# Display settings
+sp.init_printing(use_unicode=True)
+
+# Define symbols
+t, T, tau = symbols('t T tau', real=True, positive=True)
+a, b, sigma, eta, rho = symbols('a b sigma eta rho', real=True, positive=True)
+x, y = symbols('x y', real=True)
+
+print("G2++ Model - SymPy Implementation")
+print("=" * 50)
+```
+
+### B Functions
+
+```{python}
+# Define B functions
+B_x = (1 - exp(-a * tau)) / a
+B_y = (1 - exp(-b * tau)) / b
+
+print("\nB_x(τ) =")
+sp.pprint(B_x)
+
+print("\nB_y(τ) =")
+sp.pprint(B_y)
+```
+
+### Variance of State Variables
+
+The variance of the state variables over time interval $[0, t]$ can be calculated:
+
+```{python}
+# Variance of x(t) starting from x(0) = 0
+# Var[x(t)] = σ² ∫_0^t e^(-2a(t-s)) ds
+
+s = symbols('s', real=True, positive=True)
+integrand_x = sigma**2 * exp(-2*a*(t-s))
+var_x = integrate(integrand_x, (s, 0, t))
+var_x_simplified = simplify(var_x)
+
+print("\nVariance of x(t):")
+sp.pprint(var_x_simplified)
+
+# Similarly for y(t)
+integrand_y = eta**2 * exp(-2*b*(t-s))
+var_y = integrate(integrand_y, (s, 0, t))
+var_y_simplified = simplify(var_y)
+
+print("\nVariance of y(t):")
+sp.pprint(var_y_simplified)
+```
+
+### Limit Behavior
+
+Let's verify the limit behavior of $B_x(\tau)$ as $\tau \to \infty$:
+
+```{python}
+# Limit of B_x as tau -> infinity
+limit_Bx = sp.limit(B_x, tau, sp.oo)
+print("\nLimit of B_x(τ) as τ → ∞:")
+print(f"lim_(τ→∞) B_x(τ) = {limit_Bx}")
+
+# This equals 1/a, which is the steady-state value
+```
+
+### Derivatives of B Functions
+
+The derivatives are useful for computing bond option sensitivities:
+
+```{python}
+# First derivative of B_x with respect to tau
+dB_x_dtau = diff(B_x, tau)
+print("\ndB_x/dτ =")
+sp.pprint(simplify(dB_x_dtau))
+
+# Verify that dB_x/dτ = e^(-aτ)
+expected = exp(-a*tau)
+print("\nExpected: e^(-aτ)")
+print(f"Match: {simplify(dB_x_dtau - expected) == 0}")
+```
+
+## Numerical Example
+
+Let's compute numerical values with typical parameters:
+
+```{python}
+# Define typical parameter values
+params = {
+    a: 0.1,
+    b: 0.2,
+    sigma: 0.01,
+    eta: 0.015,
+    rho: 0.5
+}
+
+# Time to maturity
+tau_val = 5.0
+
+# Calculate B functions
+B_x_val = float(B_x.subs(tau, tau_val).subs(params))
+B_y_val = float(B_y.subs(tau, tau_val).subs(params))
+
+print("\nNumerical Example:")
+print(f"Parameters: a=0.1, b=0.2, σ=0.01, η=0.015, ρ=0.5")
+print(f"Time to maturity: τ = {tau_val} years")
+print(f"\nB_x({tau_val}) = {B_x_val:.6f}")
+print(f"B_y({tau_val}) = {B_y_val:.6f}")
+
+# Calculate variances at t=1
+t_val = 1.0
+var_x_val = float(var_x_simplified.subs(t, t_val).subs(params))
+var_y_val = float(var_y_simplified.subs(t, t_val).subs(params))
+
+print(f"\nVar[x({t_val})] = {var_x_val:.8f}")
+print(f"Var[y({t_val})] = {var_y_val:.8f}")
+print(f"StdDev[x({t_val})] = {sqrt(var_x_val):.8f}")
+print(f"StdDev[y({t_val})] = {sqrt(var_y_val):.8f}")
+```
+
+## Key Properties
+
+1. **Mean Reversion**: Both state variables exhibit mean reversion to zero with speeds $a$ and $b$
+2. **Gaussian**: The model produces normally distributed rates
+3. **Analytical Tractability**: Bond prices and options have closed-form solutions
+4. **Calibration**: The shift function $\varphi(t)$ ensures perfect fit to initial yield curve
+
+## References
+
+- Brigo, D., & Mercurio, F. (2006). Interest Rate Models - Theory and Practice (2nd ed.)

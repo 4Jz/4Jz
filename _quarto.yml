@@ -1,0 +1,26 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Formula Documentation"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: g2pp_model.qmd
+        text: G2++ Model
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+    toc-depth: 3
+    code-fold: false
+    code-tools: true
+    highlight-style: github
+
+execute:
+  freeze: auto
+  cache: true

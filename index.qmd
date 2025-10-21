@@ -1,0 +1,35 @@
+---
+title: "Formula Documentation"
+format: html
+---
+
+## Welcome
+
+This project contains mathematical formulas and models documented using Quarto with Python (SymPy).
+
+### Available Models
+
+- [G2++ Interest Rate Model](g2pp_model.qmd)
+
+### About
+
+This documentation uses:
+
+- **Quarto**: For creating reproducible documents
+- **SymPy**: For symbolic mathematics and formula verification
+- **Jupyter**: As the computation engine
+
+### Setup
+
+To work with this project:
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Preview the documentation
+quarto preview
+
+# Render the documentation
+quarto render
+```
